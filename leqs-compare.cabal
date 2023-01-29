@@ -1,0 +1,62 @@
+cabal-version:      2.4
+name:               leqs-compare
+version:            0.1.0.0
+synopsis:
+    Compare the performance of different linear equation solvers
+
+-- A longer description of the package.
+-- description:
+homepage:
+
+-- A URL where users can report bugs.
+-- bug-reports:
+license:            BSD-3-Clause
+license-file:       LICENSE
+author:             Roland Senn
+maintainer:         rsx@bluewin.ch
+
+-- A copyright notice.
+-- copyright:
+-- category:
+extra-source-files: CHANGELOG.md
+
+library solvers
+    exposed-modules:
+        Solve_matrix,
+        Solve_ll,
+        Solve_lu,
+        Solve_vu,
+        Solve_rosetta1,
+        Utils
+
+    -- Modules included in this library but not exported.
+    -- other-modules:
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
+    build-depends:    base ^>=4.16.1.0 ,
+                      matrix,
+                      vector,
+                      transformers
+
+    ghc-options:      -Wall -O2
+    hs-source-dirs:   src
+    default-language: Haskell2010
+
+executable leqs-compare
+    main-is:          Main.hs
+
+    -- Modules included in this executable, other than Main.
+    other-modules:    BenchmarkData
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
+    build-depends:    base ^>=4.16.1.0,
+                      solvers,
+                      criterion,
+                      matrix,
+                      vector
+
+    ghc-options:      -Wall -O2
+    hs-source-dirs:   app
+    default-language: Haskell2010
