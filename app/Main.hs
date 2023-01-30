@@ -1,7 +1,8 @@
 module Main where
 
 -- To get the report do:
--- cabal run leqs-compare -- --output solver.html
+-- cabal run leqs-compare -- --output solver_3x3.html
+-- cabal run leqs-compare -- --output solver_10x10.html
 
 import Criterion.Main
 import BenchmarkData
@@ -28,7 +29,7 @@ main = do
   putStrLn $ show ex3rosettaMatrix
   putStrLn $ show ex3rosettaRight
 
-{-}
+
   defaultMain [
     bgroup "3*3"
                  [ bench "matrix "   $ nf solve_matrix ex1data_matrix
@@ -38,9 +39,9 @@ main = do
                  , bench "vector of unboxed vectors" $ nf solve_vu ex1data_vu
                  ]
     ]
--}
 
 
+{-}
   defaultMain [
     bgroup "10*10"
                  [ bench "matrix "   $ nf solve_matrix ex3data_matrix
@@ -51,5 +52,5 @@ main = do
                  ]
 
     ]
-
+-}
 

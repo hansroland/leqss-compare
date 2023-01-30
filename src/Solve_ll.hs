@@ -47,11 +47,11 @@ backInsert (eqs , ress) =
         piv = head res
         val = last res
         xn  = val / piv
-    in scanr stepInsert xn eqs
+    in foldr stepInsert [xn] eqs
 
-stepInsert :: Equation -> Double ->  Double
+stepInsert :: Equation -> [Double] ->  [Double]
 stepInsert equat xs =
    let piv = head equat
        as = (tail . init) equat
        s = last equat - (sum  $ zipWith (*) as xs)
-    in (s/piv)
+    in (s/piv) : xs
