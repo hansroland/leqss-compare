@@ -21,7 +21,6 @@ calcTriangle mat = runState (sequence (state . pivotStep <$> ops)) mat
     where
         ops = [2..(length mat)]
 
-
 pivotStep :: Int -> Matrix -> (Equation, Matrix)
 pivotStep _ mat0 =
     let (rowp, mat) = getNextPivot mat0

@@ -1,19 +1,21 @@
-module Solve_vu (solve_vu) where
+module Solve_mu (solve_mu) where
 
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as VU
-import Control.Monad.Trans.State.Strict
+import Control.Monad.Trans.State.Strict ( state, runState )
 
 type Equation = VU.Vector Double
 type Matrix = V.Vector Equation
 
-solve_vu :: Matrix -> VU.Vector Double
-solve_vu mat = (backInsert . calcTriangle ) mat
+solve_mu :: Matrix -> [Double]
+solve_mu mat = (backInsert . calcTriangle ) mat
 
-calcTriangle :: Matrix -> (V.Vector Equation, Matrix)
+-- Here [Equations] is a list. The sequence function seems to be much slower
+-- for vectors than for lists.
+calcTriangle :: Matrix -> ([Equation], Matrix)
 calcTriangle mat = runState (sequence (state . pivotStep <$> ops)) mat
     where
-        ops = V.enumFromN 1 $ pred $ length mat
+        ops = [2..(length mat)]
 
 pivotStep :: Int -> Matrix -> (Equation, Matrix)
 pivotStep _ mat0 =
@@ -23,7 +25,7 @@ pivotStep _ mat0 =
 
 -- Find biggest pivot in first column.
 -- Remove row with pivot from matrix
--- Return pivot and new matrix
+-- Return pivot-row and new matrix
 getNextPivot :: Matrix -> (Equation, Matrix)
 getNextPivot mat =
     let len = V.length mat
@@ -45,17 +47,19 @@ applyPivot rowp row = VU.map (f *) rowp
    where
     f = negate $ VU.head row / VU.head rowp    -- Works only if pivot is in the first column
 
-backInsert :: (V.Vector Equation, Matrix) -> VU.Vector Double
+backInsert :: ([Equation], Matrix) -> [Double]
 backInsert (eqs , ress) =
     let res = V.head ress
         piv = VU.head res
         val = VU.last res
         xn  = val / piv
-    in V.foldr stepInsert (VU.singleton xn) eqs
+    in foldr stepInsert [xn] eqs
 
-stepInsert :: Equation -> VU.Vector Double ->  VU.Vector Double
+-- Here we are faster with lists than with unboxed vectors!
+-- In the last line the cons operation for is o(1) for lists, but o(n) for vectors.
+stepInsert :: Equation -> [Double] ->  [Double]
 stepInsert equat xs =
    let piv = VU.head equat
        as = (VU.tail . VU.init) equat
-       s = VU.last equat - (VU.sum  $ VU.zipWith (*) as (xs))
-    in VU.cons (s/piv)  xs
+       s = VU.last equat - (VU.sum  $ VU.zipWith (*) as (VU.fromList xs))
+    in (s/piv) : xs
