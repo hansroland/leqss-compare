@@ -1,5 +1,3 @@
-
-
 module Solve_lu (solve_lu) where
 
 import qualified Data.Vector.Unboxed as V
@@ -13,7 +11,7 @@ type Matrix = [Equation]
 -- https://en.wikipedia.org/wiki/Gaussian_elimination
 
 
-solve_lu :: Matrix -> [Double]
+solve_lu :: Matrix -> V.Vector Double
 solve_lu mat = (backInsert . calcTriangle ) mat
 
 calcTriangle :: Matrix -> ([Equation], Matrix)
@@ -49,13 +47,13 @@ applyPivot rowp row = V.map (f *) rowp
    where
     f = negate $ V.head row / V.head rowp    -- Works only if pivot is in the first column
 
-backInsert :: ([Equation], Matrix) -> [Double]
+backInsert :: ([Equation], Matrix) -> V.Vector Double
 backInsert (eqs , ress) =
     let res = head ress
         piv = V.head res
         val = V.last res
         xn  = val / piv
-    in foldr stepInsert [xn] eqs
+    in V.fromList $ foldr stepInsert [xn] eqs
 
 stepInsert :: Equation -> [Double] ->  [Double]
 stepInsert equat xs =

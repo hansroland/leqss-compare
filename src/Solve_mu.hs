@@ -7,7 +7,7 @@ import Control.Monad.Trans.State.Strict ( state, runState )
 type Equation = VU.Vector Double
 type Matrix = V.Vector Equation
 
-solve_mu :: Matrix -> [Double]
+solve_mu :: Matrix -> VU.Vector Double
 solve_mu mat = (backInsert . calcTriangle ) mat
 
 -- Here [Equations] is a list. The sequence function seems to be much slower
@@ -47,13 +47,13 @@ applyPivot rowp row = VU.map (f *) rowp
    where
     f = negate $ VU.head row / VU.head rowp    -- Works only if pivot is in the first column
 
-backInsert :: ([Equation], Matrix) -> [Double]
+backInsert :: ([Equation], Matrix) -> VU.Vector Double
 backInsert (eqs , ress) =
     let res = V.head ress
         piv = VU.head res
         val = VU.last res
         xn  = val / piv
-    in foldr stepInsert [xn] eqs
+    in VU.fromList $ foldr stepInsert [xn] eqs
 
 -- Here we are faster with lists than with unboxed vectors!
 -- In the last line the cons operation for is o(1) for lists, but o(n) for vectors.
