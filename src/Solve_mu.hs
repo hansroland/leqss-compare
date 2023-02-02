@@ -1,33 +1,46 @@
+{-# Language OverloadedStrings #-}
+
 module Solve_mu (solve_mu) where
 
+import qualified Data.Text as T
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as VU
-import Control.Monad.Trans.State.Strict ( state, runState )
+import Control.Monad.Trans.State.Strict
+    ( StateT(StateT, runStateT) )
 
 type Equation = VU.Vector Double
 type Matrix = V.Vector Equation
 
-solve_mu :: Matrix -> VU.Vector Double
-solve_mu mat = (backInsert . calcTriangle ) mat
+cLIMIT :: Double
+cLIMIT = 0.001
+
+cINVALID :: T.Text
+cINVALID = "Attempt to invert a non-invertible matrix"
+
+
+solve_mu :: Matrix -> Either T.Text (VU.Vector Double)
+solve_mu mat = calcTriangle mat >>= backInsert
 
 -- Here [Equations] is a list. The sequence function seems to be much slower
 -- for vectors than for lists.
-calcTriangle :: Matrix -> ([Equation], Matrix)
-calcTriangle mat = runState (sequence (state . pivotStep <$> ops)) mat
+calcTriangle :: Matrix -> Either T.Text ([Equation], Matrix)
+calcTriangle mat = runStateT (sequence (StateT . pivotStep <$> ops)) mat
     where
         ops = [2..(length mat)]
 
-pivotStep :: Int -> Matrix -> (Equation, Matrix)
-pivotStep _ mat0 =
-    let (rowp, mat) = getNextPivot mat0
-        newmat = V.map (newRow rowp) mat
-    in  (rowp, newmat)
+pivotStep :: Int -> Matrix -> Either T.Text (Equation, Matrix)
+pivotStep _ mat0 = do
+    let (rowp, mat) = getNextPivotRow mat0
+        pivot = VU.head rowp
+    if  abs pivot < cLIMIT
+      then Left cINVALID
+      else Right (rowp, V.map (newRow rowp) mat)
 
 -- Find biggest pivot in first column.
 -- Remove row with pivot from matrix
 -- Return pivot-row and new matrix
-getNextPivot :: Matrix -> (Equation, Matrix)
-getNextPivot mat =
+getNextPivotRow :: Matrix -> (Equation, Matrix)
+getNextPivotRow mat =
     let len = V.length mat
         ixrow = snd $ maximum $ V.zip (V.map (abs . VU.head) mat) (V.enumFromN 0 (len - 1))
         strtRows = V.slice 0 ixrow mat
@@ -47,13 +60,15 @@ applyPivot rowp row = VU.map (f *) rowp
    where
     f = negate $ VU.head row / VU.head rowp    -- Works only if pivot is in the first column
 
-backInsert :: ([Equation], Matrix) -> VU.Vector Double
-backInsert (eqs , ress) =
+backInsert :: ([Equation], Matrix) -> Either T.Text (VU.Vector Double)
+backInsert (eqs , ress) = do
     let res = V.head ress
         piv = VU.head res
         val = VU.last res
         xn  = val / piv
-    in VU.fromList $ foldr stepInsert [xn] eqs
+    if  abs piv < cLIMIT
+      then Left cINVALID
+      else Right $ VU.fromList $ foldr stepInsert [xn] eqs
 
 -- Here we are faster with lists than with unboxed vectors!
 -- In the last line the cons operation for is o(1) for lists, but o(n) for vectors.

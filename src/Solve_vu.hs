@@ -1,5 +1,8 @@
+{-# Language OverloadedStrings #-}
+
 module Solve_vu (solve_vu) where
 
+import qualified Data.Text as T
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as VU
 import Control.Monad.Trans.State.Strict
@@ -7,19 +10,29 @@ import Control.Monad.Trans.State.Strict
 type Equation = VU.Vector Double
 type Matrix = V.Vector Equation
 
-solve_vu :: Matrix -> VU.Vector Double
-solve_vu mat = (backInsert . calcTriangle ) mat
+cLIMIT :: Double
+cLIMIT = 0.001
 
-calcTriangle :: Matrix -> (V.Vector Equation, Matrix)
-calcTriangle mat = runState (sequence (state . pivotStep <$> ops)) mat
+cINVALID :: T.Text
+cINVALID = "Attempt to invert a non-invertible matrix"
+
+
+
+solve_vu :: Matrix -> Either T.Text (VU.Vector Double)
+solve_vu mat = calcTriangle mat >>= backInsert
+
+calcTriangle :: Matrix -> Either T.Text (V.Vector Equation, Matrix)
+calcTriangle mat = runStateT (sequence (StateT . pivotStep <$> ops)) mat
     where
         ops = V.enumFromN 1 $ pred $ length mat
 
-pivotStep :: Int -> Matrix -> (Equation, Matrix)
-pivotStep _ mat0 =
+pivotStep :: Int -> Matrix -> Either T.Text (Equation, Matrix)
+pivotStep _ mat0 = do
     let (rowp, mat) = getNextPivot mat0
-        newmat = V.map (newRow rowp) mat
-    in  (rowp, newmat)
+        pivot = VU.head rowp
+    if  abs pivot < cLIMIT
+      then Left cINVALID
+      else Right $ (rowp, V.map (newRow rowp) mat)
 
 -- Find biggest pivot in first column.
 -- Remove row with pivot from matrix
@@ -45,13 +58,15 @@ applyPivot rowp row = VU.map (f *) rowp
    where
     f = negate $ VU.head row / VU.head rowp    -- Works only if pivot is in the first column
 
-backInsert :: (V.Vector Equation, Matrix) -> VU.Vector Double
-backInsert (eqs , ress) =
+backInsert :: (V.Vector Equation, Matrix) -> Either T.Text (VU.Vector Double)
+backInsert (eqs , ress) = do
     let res = V.head ress
         piv = VU.head res
         val = VU.last res
         xn  = val / piv
-    in V.foldr stepInsert (VU.singleton xn) eqs
+    if  abs piv < cLIMIT
+      then Left cINVALID
+      else Right $ V.foldr stepInsert (VU.singleton xn) eqs
 
 stepInsert :: Equation -> VU.Vector Double ->  VU.Vector Double
 stepInsert equat xs =

@@ -38,7 +38,8 @@ library solvers
     build-depends:    base ^>=4.16.1.0 ,
                       matrix,
                       vector,
-                      transformers
+                      transformers,
+                      text
 
     ghc-options:      -Wall -O2
     hs-source-dirs:   src
@@ -56,7 +57,8 @@ executable leqs-compare
                       solvers,
                       criterion,
                       matrix,
-                      vector
+                      vector,
+                      text
 
     ghc-options:      -Wall -O2
     hs-source-dirs:   app
