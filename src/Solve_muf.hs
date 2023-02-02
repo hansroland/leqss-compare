@@ -1,14 +1,14 @@
 {-# Language OverloadedStrings #-}
 
-module Solve_mu (solve_mu) where
+module Solve_muf (solve_muf) where
 
+import Data.Foldable ( foldlM )
+import Data.List ( foldl' )
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as VU
-import Control.Monad.Trans.State.Strict
-    ( StateT(StateT, runStateT) )
 
-import Debug.Trace
+-- import Debug.Trace
 
 type Equation = VU.Vector Double
 type Matrix = V.Vector Equation
@@ -19,24 +19,21 @@ cLIMIT = 0.001
 cINVALID :: T.Text
 cINVALID = "Attempt to invert a non-invertible matrix"
 
-
-solve_mu :: Matrix -> Either T.Text (VU.Vector Double)
-solve_mu mat = calcTriangle mat >>= backInsert
+solve_muf :: Matrix -> Either T.Text (VU.Vector Double)
+solve_muf mat = calcTriangle mat >>= backInsert
 
 -- Here [Equations] is a list. The sequence function seems to be much slower
 -- for vectors than for lists.
 calcTriangle :: Matrix -> Either T.Text ([Equation], Matrix)
-calcTriangle mat = runStateT (sequence (StateT . pivotStep <$> ops)) mat
-    where
-        ops = [2..(length mat)]
+calcTriangle mat = foldlM pivotStep ([], mat) [2..(length mat)]
 
-pivotStep :: Int -> Matrix -> Either T.Text (Equation, Matrix)
-pivotStep _ mat0 = do
+pivotStep :: ([Equation],Matrix) -> Int -> Either T.Text ([Equation], Matrix)
+pivotStep (eqs, mat0) _ = do
     let (rowp, mat) = getNextPivotRow mat0
         pivot = VU.head rowp
     if  abs pivot < cLIMIT
       then Left cINVALID
-      else Right (rowp, V.map (newRow rowp) mat)
+      else Right (rowp : eqs, V.map (newRow rowp) mat)
 
 -- Find biggest pivot in first column.
 -- Remove row with pivot from matrix
@@ -70,12 +67,12 @@ backInsert (eqs , ress) = do
         xn  = val / piv
     if  abs piv < cLIMIT
       then Left cINVALID
-      else Right $ VU.fromList $ foldr stepInsert [xn] eqs
+      else Right $ VU.fromList $ foldl' stepInsert [xn] eqs
 
 -- Here we are faster with lists than with unboxed vectors!
 -- In the last line the cons operation for is o(1) for lists, but o(n) for vectors.
-stepInsert :: Equation -> [Double] ->  [Double]
-stepInsert equat xs =
+stepInsert :: [Double] -> Equation -> [Double]
+stepInsert xs equat =
    let piv = VU.head equat
        as = (VU.tail . VU.init) equat
        s = VU.last equat - (VU.sum  $ VU.zipWith (*) as (VU.fromList xs))

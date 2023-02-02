@@ -12,6 +12,7 @@ import Solve_ll
 import Solve_lu
 import Solve_vu
 import Solve_mu
+import Solve_muf
 import Solve_rosetta1
 
 main :: IO ()
@@ -30,7 +31,7 @@ main = do
   putStrLn $ show ex3rosettaMatrix
   putStrLn $ show ex3rosettaRight
 
-{-
+
   defaultMain [
     bgroup "3*3"
                  [ bench "matrix "   $ nf solve_matrix ex1data_matrix
@@ -38,10 +39,12 @@ main = do
                  , bench "list of lists "   $ nf solve_ll ex1data_ll
                  , bench "list of unboxed vectors" $ nf solve_lu ex1data_lu
                  , bench "vector of unboxed vectors" $ nf solve_vu ex1data_vu
-                 , bench "mixed (list/vector) of unboxed vectors" $ nf solve_mu ex1data_vu
+                 , bench "mixed (list/vector) (state) of unboxed vectors" $ nf solve_mu ex1data_vu
+                 , bench "mixed (list/vector) (fold) of unboxed vectors" $ nf solve_muf ex1data_vu
                  ]
     ]
--}
+
+{-
 
   defaultMain [
     bgroup "10*10"
@@ -50,8 +53,10 @@ main = do
                  , bench "list of lists "   $ nf solve_ll ex3data_ll
                  , bench "list of unboxed vectors" $ nf solve_lu ex3data_lu
                  , bench "vector of unboxed vectors" $ nf solve_vu ex3data_vu
-                 , bench "mixed (list/vector) of unboxed vectors" $ nf solve_mu ex3data_vu
+                 , bench "mixed (list/vector) of unboxed vectors (state)" $ nf solve_mu ex3data_vu
+                 , bench "mixed (list/vector) of unboxed vectors (fold)" $ nf solve_muf ex3data_vu
                  ]
     ]
+-}
 
 
