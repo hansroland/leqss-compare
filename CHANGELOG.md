@@ -1,4 +1,4 @@
-# Revision history for leqs-compare
+# Revision history for leqss-compare
 
 ## 0.1.0.0 -- YYYY-mm-dd
 
