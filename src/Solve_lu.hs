@@ -17,7 +17,25 @@ cINVALID :: T.Text
 cINVALID = "Attempt to invert a non-invertible matrix"
 
 solve_lu :: Matrix -> Either T.Text (V.Vector Double)
-solve_lu mat = calcTriangle mat >>= backInsert
+solve_lu mat = checkMatrix mat >>= calcTriangle >>= backInsert
+
+checkMatrix :: Matrix -> Either T.Text Matrix
+checkMatrix mat = checkMatrixSameLength mat >>= checkRowsCols
+
+checkMatrixSameLength :: Matrix -> Either T.Text Matrix
+checkMatrixSameLength mat = do
+    let length1 = V.length $ head mat
+    if all (\r -> (V.length r == length1)) mat
+        then Right mat
+        else Left " Not all equations have the same length"
+
+checkRowsCols :: Matrix -> Either T.Text Matrix
+checkRowsCols mat = do
+    let numRows = length mat
+        numCols = V.length $ head mat
+    if numRows + 1 == numCols
+        then Right mat
+        else Left "Number of rows is not compatible with number of columns"
 
 calcTriangle :: Matrix -> Either T.Text ([Equation], Matrix)
 calcTriangle mat = runStateT (sequence (StateT . pivotStep <$> ops)) mat
@@ -26,7 +44,7 @@ calcTriangle mat = runStateT (sequence (StateT . pivotStep <$> ops)) mat
 
 pivotStep :: Int -> Matrix -> Either T.Text (Equation, Matrix)
 pivotStep _ mat0 = do
-    let (rowp, mat) = getNextPivot mat0
+    let (rowp, mat) = getNextPivotRow mat0
         pivot = V.head rowp
     if  abs pivot < cLIMIT
       then Left cINVALID
@@ -35,8 +53,8 @@ pivotStep _ mat0 = do
 -- Find biggest pivot in first column.
 -- Remove row with pivot from matrix
 -- Return pivot and new matrix
-getNextPivot :: Matrix -> (Equation, Matrix)
-getNextPivot mat =
+getNextPivotRow :: Matrix -> (Equation, Matrix)
+getNextPivotRow mat =
     let ixrow = snd $ maximum $ zip (map (abs . V.head) mat) [0..]
         (heads, tails) = splitAt ixrow mat
         rowp = head tails

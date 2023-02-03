@@ -20,7 +20,26 @@ cINVALID :: T.Text
 cINVALID = "Attempt to invert a non-invertible matrix"
 
 solve_muf :: Matrix -> Either T.Text (VU.Vector Double)
-solve_muf mat = calcTriangle mat >>= backInsert
+solve_muf mat = checkMatrix mat >>= calcTriangle >>= backInsert
+
+checkMatrix :: Matrix -> Either T.Text Matrix
+checkMatrix mat = checkMatrixSameLength mat >>= checkRowsCols
+
+checkMatrixSameLength :: Matrix -> Either T.Text Matrix
+checkMatrixSameLength mat = do
+    let length1 = VU.length $ V.head mat
+    if all (\r -> (VU.length r == length1)) mat
+        then Right mat
+        else Left " Not all equations have the same length"
+
+checkRowsCols :: Matrix -> Either T.Text Matrix
+checkRowsCols mat = do
+    let numRows = length mat
+        numCols = VU.length $ V.head mat
+    if numRows + 1 == numCols
+        then Right mat
+        else Left "Number of rows is not compatible with number of columns"
+
 
 -- Here [Equations] is a list. The sequence function seems to be much slower
 -- for vectors than for lists.
