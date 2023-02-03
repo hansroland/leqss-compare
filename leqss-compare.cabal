@@ -27,6 +27,7 @@ library solvers
         Solve_ll,
         Solve_lu,
         Solve_vu,
+        Solve_vu_unsafe,
         Solve_mu,
         Solve_muf,
         Solve_rosetta1
