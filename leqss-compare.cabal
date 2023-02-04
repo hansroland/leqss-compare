@@ -28,6 +28,7 @@ library solvers
         Solve_lu,
         Solve_vu,
         Solve_vu_unsafe,
+        Solve_new_vu,
         Solve_mu,
         Solve_muf,
         Solve_rosetta1
@@ -65,3 +66,19 @@ executable leqss-compare
     ghc-options:      -Wall -O2
     hs-source-dirs:   app
     default-language: Haskell2010
+
+test-suite test
+    default-language: Haskell2010
+    type:             exitcode-stdio-1.0
+    hs-source-dirs:   test
+    main-is:          Spec.hs
+    Other-Modules:    LeqssSpec,
+                      Utils
+    build-depends:
+                      base ^>=4.16.1.0,
+                      hspec,
+                      solvers,
+                      criterion,
+                      matrix,
+                      vector,
+                      text

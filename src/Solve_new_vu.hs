@@ -1,6 +1,6 @@
 {-# Language OverloadedStrings #-}
 
-module Solve_vu (solve_vu) where
+module Solve_new_vu (solve_new_vu) where
 
 import qualified Data.Text as T
 import qualified Data.Vector as V
@@ -13,13 +13,11 @@ type Matrix = V.Vector Equation
 cLIMIT :: Double
 cLIMIT = 0.001
 
-cINVALID :: T.Text
-cINVALID = "Attempt to invert a non-invertible matrix"
+cNONSOLVABLE:: T.Text
+cNONSOLVABLE = "Attempt to solve a non-solvable equation system"
 
-
-
-solve_vu :: Matrix -> Either T.Text (VU.Vector Double)
-solve_vu mat = checkMatrix mat >>= calcTriangle >>= backInsert
+solve_new_vu :: Matrix -> Either T.Text (VU.Vector Double)
+solve_new_vu mat = checkMatrix mat >>= calcTriangle >>= backInsert
 
 checkMatrix :: Matrix -> Either T.Text Matrix
 checkMatrix mat = checkMatrixSameLength mat >>= checkRowsCols
@@ -47,11 +45,25 @@ calcTriangle mat = runStateT (sequence (StateT . pivotStep <$> ops)) mat
 
 pivotStep :: Int -> Matrix -> Either T.Text (Equation, Matrix)
 pivotStep _ mat0 = do
-    let (rowp, mat) = getNextPivot mat0
-        pivot = VU.head rowp
     if  abs pivot < cLIMIT
-      then Left cINVALID
-      else Right $ (rowp, V.map (newRow rowp) mat)
+      then Left cNONSOLVABLE
+      else Right $ (rowp, V.map newRow mat)
+  where
+    (rowp, mat) = getNextPivot mat0
+    tailrowp = VU.tail rowp
+    pivot = VU.head rowp
+    -- fact = negate $ 1 / pivot
+    -- Apply the pivot to a row
+    newRow :: Equation -> Equation
+    newRow row = VU.zipWith (+)
+                     (applyPivot (VU.head row))
+                     (VU.tail row)
+
+    applyPivot :: Double -> Equation
+    applyPivot hdRow = VU.map (f *) tailrowp
+      where
+       f = negate $ hdRow / pivot    -- Works only if pivot is in the first column
+
 
 -- Find biggest pivot in first column.
 -- Remove row with pivot from matrix
@@ -65,17 +77,6 @@ getNextPivot mat =
         endRows = V.slice (ixrow + 1) (len - ixrow -1) mat
     in  (rowp, strtRows <> endRows)
 
--- Apply the pivot to a row
-newRow :: Equation -> Equation -> Equation
-newRow rowp row = VU.tail $
-                   VU.zipWith (+)
-                     (applyPivot rowp row)
-                     row
-
-applyPivot :: Equation -> Equation -> Equation
-applyPivot rowp row = VU.map (f *) rowp
-   where
-    f = negate $ VU.head row / VU.head rowp    -- Works only if pivot is in the first column
 
 backInsert :: (V.Vector Equation, Matrix) -> Either T.Text (VU.Vector Double)
 backInsert (eqs , ress) = do
@@ -84,7 +85,7 @@ backInsert (eqs , ress) = do
         val = VU.last res
         xn  = val / piv
     if  abs piv < cLIMIT
-      then Left cINVALID
+      then Left cNONSOLVABLE
       else Right $ V.foldr stepInsert (VU.singleton xn) eqs
 
 stepInsert :: Equation -> VU.Vector Double ->  VU.Vector Double

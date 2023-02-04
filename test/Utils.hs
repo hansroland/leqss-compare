@@ -18,3 +18,6 @@ roundVectorU vec = VU.map roundDouble vec
 -- round an  vector
 roundVectorV :: V.Vector Double -> (V.Vector Double)
 roundVectorV vec = V.map roundDouble vec
+
+roundList :: [Double] -> [Double]
+roundList lst = roundDouble <$> lst
