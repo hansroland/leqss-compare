@@ -4,7 +4,8 @@ module Solve_ll (solve_ll) where
 
 import qualified Data.Text as T
 import Control.Monad.Trans.State.Strict
-    ( StateT(StateT, runStateT) )
+
+import BenchmarkData
 
 type Equation = [Double]
 type Matrix = [Equation]
@@ -12,8 +13,8 @@ type Matrix = [Equation]
 cLIMIT :: Double
 cLIMIT = 0.001
 
-cINVALID :: T.Text
-cINVALID = "Attempt to invert a non-invertible matrix"
+cNONSOLVABLE:: T.Text
+cNONSOLVABLE = "Attempt to solve a non-solvable equation system"
 
 solve_ll :: Matrix -> Either T.Text [Double]
 solve_ll mat = checkMatrix mat >>= calcTriangle >>= backInsert
@@ -37,53 +38,50 @@ checkRowsCols mat = do
         else Left "Number of rows is not compatible with number of columns"
 
 calcTriangle :: Matrix -> Either T.Text ([Equation], Matrix)
-calcTriangle mat = runStateT ((sequence (StateT . pivotStep <$> ops))) mat
-    where
-        ops = [2..(length mat)]
+calcTriangle mat0 = runStateT (sequence (StateT . pivotStep <$> ops)) mat0
+  where
+    len0 = length mat0
+    ops = replicate (pred len0) 0
+    venum = [(0::Int)..len0]
 
-pivotStep :: Int -> Matrix -> Either T.Text (Equation, Matrix)
-pivotStep _ mat0 = do
-    let (rowp, mat) = getNextPivotRow mat0
-        pivot = head rowp
-    if  abs pivot < cLIMIT
-      then Left cINVALID
-      else Right (rowp, fmap (newRow rowp) mat)
+    pivotStep :: Int -> Matrix -> Either T.Text (Equation, Matrix)
+    pivotStep _ mat =
+        if abs negPivot < cLIMIT
+        then Left cNONSOLVABLE
+        else Right $ (pivotrow, map newRow newMat)
+      where
+        ixprow = snd $ maximum $ zip (map (abs . head) mat) venum
+        pivotrow = mat !! ixprow
+        newMat = take ixprow mat <> drop (ixprow + 1) mat
 
--- Find biggest pivot in first column.
--- Remove row with pivot from matrix
--- Return pivot and new matrix
-getNextPivotRow :: Matrix -> (Equation, Matrix)
-getNextPivotRow mat =
-    let ixrow = snd $ maximum $ zip (map (abs . head) mat) [0..]
-        (heads, tails) = splitAt ixrow mat
-        rowp = head tails
-    in  (rowp, heads <> tail tails)
+        -- Apply the pivot to a row
+        newRow :: Equation -> Equation
+        newRow row = zipWith (+)
+                     (applyPivot (head row))
+                     (tail row)
 
--- Apply the pivot to a row
-newRow :: Equation -> Equation -> Equation
-newRow rowp row = tail $
-                   zipWith (+)
-                     (applyPivot rowp row)
-                     row
+        applyPivot :: Double -> Equation
+        applyPivot hdRow = map (hdRow / negPivot *) $ tailprow
+        -- The next 2 values do not change between rows in applyPivot!
+        tailprow = tail pivotrow
+        negPivot = negate $ head pivotrow
 
-applyPivot :: Equation -> Equation -> Equation
-applyPivot rowp row = fmap (f *) rowp
-   where
-    f = negate $ head row / head rowp    -- Works only if pivot is in the first column
-
-backInsert :: ([Equation], Matrix) -> Either T.Text [Double]
+backInsert :: ( [Equation], Matrix) -> Either T.Text ([Double])
 backInsert (eqs , ress) = do
     let res = head ress
         piv = head res
         val = last res
         xn  = val / piv
     if  abs piv < cLIMIT
-      then Left cINVALID
+      then Left cNONSOLVABLE
       else Right $ foldr stepInsert [xn] eqs
 
-stepInsert :: Equation -> [Double] ->  [Double]
+stepInsert :: Equation -> [Double] -> [Double]
 stepInsert equat xs =
    let piv = head equat
        as = (tail . init) equat
-       s = last equat - (sum  $ zipWith (*) as xs)
+       s = last equat - (sum  $ zipWith (*) as (xs))
     in (s/piv) : xs
+
+main :: IO ()
+main = print $ solve_ll ex1data_ll
