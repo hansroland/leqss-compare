@@ -4,6 +4,8 @@ import Data.Matrix
 import qualified Data.Vector.Unboxed as VU
 import qualified Data.Vector as V
 
+import qualified Data.Vec.Base as Vec
+import qualified Data.Vec.LinAlg as Vec
 
 -- -------------------------------------------------------------- Example 1
 -- Example from
@@ -27,15 +29,18 @@ ex1rosettaRight = pure . last <$> ex1rows
 ex1data_ll :: [[Double]]
 ex1data_ll = ex1rows
 
-ex1data_lu :: [VU.Vector Double]
-ex1data_lu = VU.fromList <$> ex1data_ll
 
 ex1data_vu :: V.Vector (VU.Vector Double)
-ex1data_vu = V.fromList ex1data_lu
+ex1data_vu = V.fromList $ VU.fromList <$> ex1data_ll
 
 ex1data_matrix :: Matrix Double
 ex1data_matrix = fromLists ex1rows
 
+ex1dataVecMat :: Vec.Mat33 Double
+ex1dataVecMat = Vec.matFromLists $ map init ex1rows
+
+ex1dataVecCoeffs :: Vec.Vec3 Double
+ex1dataVecCoeffs = Vec.fromList $ map last ex1rows
 -- -------------------------------------------------------------- Example 3
 -- Example with a 10 * 10 matrix
 
@@ -75,7 +80,7 @@ ex3data_lu :: [VU.Vector Double]
 ex3data_lu = VU.fromList <$> ex3data_ll
 
 ex3data_vu :: V.Vector (VU.Vector Double)
-ex3data_vu = V.fromList ex3data_lu
+ex3data_vu = V.fromList $ VU.fromList <$> ex3data_ll
 
 ex3data_matrix :: Matrix Double
 ex3data_matrix = fromLists ex3rows

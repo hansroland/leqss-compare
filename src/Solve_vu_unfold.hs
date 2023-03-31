@@ -98,7 +98,7 @@ backInsert eqs = Right $ V.foldr stepInsert VU.empty eqs
     stepInsert equat xs =
         let piv = VU.head equat
             as = (VU.tail . VU.init) equat
-            s = VU.last equat - (VU.sum $ VU.zipWith (*) as xs)
+            s = VU.last equat - VU.sum (VU.zipWith (*) as xs)
         in VU.cons (s/piv)  xs
 
 main :: IO ()

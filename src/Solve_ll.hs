@@ -25,7 +25,7 @@ checkMatrix mat = checkMatrixSameLength mat >>= checkRowsCols
 checkMatrixSameLength :: Matrix -> Either T.Text Matrix
 checkMatrixSameLength mat = do
     let length1 = length $ head mat
-    if all (\r -> (length r == length1)) mat
+    if all (\r -> length r == length1) mat
         then Right mat
         else Left " Not all equations have the same length"
 
@@ -38,7 +38,7 @@ checkRowsCols mat = do
         else Left "Number of rows is not compatible with number of columns"
 
 calcTriangle :: Matrix -> Either T.Text ([Equation], Matrix)
-calcTriangle mat0 = runStateT (sequence (StateT . pivotStep <$> ops)) mat0
+calcTriangle mat0 = runStateT (mapM (StateT . pivotStep)  ops) mat0
   where
     len0 = length mat0
     ops = replicate (pred len0) 0
@@ -61,12 +61,12 @@ calcTriangle mat0 = runStateT (sequence (StateT . pivotStep <$> ops)) mat0
                      (tail row)
 
         applyPivot :: Double -> Equation
-        applyPivot hdRow = map (hdRow / negPivot *) $ tailprow
+        applyPivot hdRow = map (hdRow / negPivot *) tailprow
         -- The next 2 values do not change between rows in applyPivot!
         tailprow = tail pivotrow
         negPivot = negate $ head pivotrow
 
-backInsert :: ( [Equation], Matrix) -> Either T.Text ([Double])
+backInsert :: ( [Equation], Matrix) -> Either T.Text [Double]
 backInsert (eqs , ress) = do
     let res = head ress
         piv = head res
@@ -80,7 +80,7 @@ stepInsert :: Equation -> [Double] -> [Double]
 stepInsert equat xs =
    let piv = head equat
        as = (tail . init) equat
-       s = last equat - (sum  $ zipWith (*) as (xs))
+       s = last equat - sum (zipWith (*) as xs)
     in (s/piv) : xs
 
 main :: IO ()

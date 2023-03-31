@@ -22,7 +22,7 @@ solve_vu_unsafe :: Matrix -> Either T.Text (VU.Vector Double)
 solve_vu_unsafe mat = calcTriangle mat >>= backInsert
 
 calcTriangle :: Matrix -> Either T.Text (V.Vector Equation, Matrix)
-calcTriangle mat = runStateT (sequence (StateT . pivotStep <$> ops)) mat
+calcTriangle mat = runStateT (mapM (StateT . pivotStep) ops) mat
     where
         ops = V.enumFromN 1 $ pred $ length mat
 
@@ -72,5 +72,5 @@ stepInsert :: Equation -> VU.Vector Double ->  VU.Vector Double
 stepInsert equat xs =
    let piv = VU.unsafeHead equat
        as = (VU.unsafeTail . VU.unsafeInit) equat
-       s = VU.unsafeLast equat - (VU.sum  $ VU.zipWith (*) as (xs))
+       s = VU.unsafeLast equat - VU.sum (VU.zipWith (*) as xs)
     in VU.cons (s/piv)  xs
