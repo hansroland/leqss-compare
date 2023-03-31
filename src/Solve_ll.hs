@@ -48,7 +48,7 @@ calcTriangle mat0 = runStateT (mapM (StateT . pivotStep)  ops) mat0
     pivotStep _ mat =
         if abs negPivot < cLIMIT
         then Left cNONSOLVABLE
-        else Right $ (pivotrow, map newRow newMat)
+        else Right (pivotrow, map newRow newMat)
       where
         ixprow = snd $ maximum $ zip (map (abs . head) mat) venum
         pivotrow = mat !! ixprow

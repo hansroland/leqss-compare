@@ -51,7 +51,7 @@ pivotStep :: Matrix -> Either T.Text (Equation, Matrix)
 pivotStep  mat =
     if abs negPivot < cLIMIT
       then Left cNONSOLVABLE
-      else Right $ (rowp, V.map newRow newMat)
+      else Right (rowp, V.map newRow newMat)
   where
     (rowp, newMat) = getNextPivot mat
     tailrowp = VU.tail rowp
