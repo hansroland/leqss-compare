@@ -16,21 +16,22 @@ cLIMIT = 0.001
 cINVALID :: T.Text
 cINVALID = "Attempt to invert a non-invertible matrix"
 
-
-
 solve_vu :: Matrix -> Either T.Text (VU.Vector Double)
 solve_vu mat = checkMatrix mat >>= calcTriangle >>= backInsert
 
+-- Run different sanity checks on the input data
 checkMatrix :: Matrix -> Either T.Text Matrix
 checkMatrix mat = checkMatrixSameLength mat >>= checkRowsCols
 
+-- Check: All rows have the same length
 checkMatrixSameLength :: Matrix -> Either T.Text Matrix
 checkMatrixSameLength mat = do
     let length1 = VU.length $ V.head mat
-    if all (\r -> (VU.length r == length1)) mat
+    if all (\r -> VU.length r == length1) (V.tail mat)
         then Right mat
-        else Left " Not all equations have the same length"
+        else Left "Not all equations have the same length"
 
+-- Check: The number of cols is one bigger than the number of rows
 checkRowsCols :: Matrix -> Either T.Text Matrix
 checkRowsCols mat = do
     let numRows = length mat
@@ -39,46 +40,40 @@ checkRowsCols mat = do
         then Right mat
         else Left "Number of rows is not compatible with number of columns"
 
-
+--
 calcTriangle :: Matrix -> Either T.Text (V.Vector Equation, Matrix)
-calcTriangle mat = runStateT (sequence (StateT . pivotStep <$> ops)) mat
+calcTriangle mat = runStateT (mapM (StateT . pivotStep) ops) mat
     where
-        ops = V.enumFromN 1 $ pred $ length mat
+        ops = V.replicate (length mat - 1) ()
 
-pivotStep :: Int -> Matrix -> Either T.Text (Equation, Matrix)
+pivotStep :: () -> Matrix -> Either T.Text (Equation, Matrix)
 pivotStep _ mat0 = do
-    let (rowp, mat) = getNextPivot mat0
+    let (rowp, mat) = getNextPivot
         pivot = VU.head rowp
     if  abs pivot < cLIMIT
       then Left cINVALID
       else Right (rowp, V.map (newRow rowp) mat)
-
--- Find biggest pivot in first column.
--- Remove row with pivot from matrix
--- Return pivot and new matrix
-getNextPivot :: Matrix -> (Equation, Matrix)
-getNextPivot mat =
-    let len = V.length mat
-        ixrow = snd $ maximum $ V.zip (V.map (abs . VU.head) mat) (V.enumFromN 0 (len - 1))
-        strtRows = V.slice 0 ixrow mat
-        rowp = (V.!) mat ixrow
-        endRows = V.slice (ixrow + 1) (len - ixrow -1) mat
-    in  (rowp, strtRows <> endRows)
+  where
+    -- Find biggest pivot in first column.
+    -- Remove row with pivot from matrix
+    -- Return pivot and new matrix
+    getNextPivot :: (Equation, Matrix)
+    getNextPivot =
+        let len = V.length mat0
+            ixrow = snd $ maximum $ V.zip (V.map (abs . VU.head) mat0) (V.enumFromN 0 (len - 1))
+            rowp = (V.!) mat0 ixrow
+            newmat = V.ifilter (\i _ -> i /= ixrow) mat0
+        in  (rowp, newmat)
 
 -- Apply the pivot to a row
 newRow :: Equation -> Equation -> Equation
-newRow rowp row = VU.tail $
-                   VU.zipWith (+)
-                     (applyPivot rowp row)
-                     row
-
-applyPivot :: Equation -> Equation -> Equation
-applyPivot rowp row = VU.map (f *) rowp
-   where
+newRow rowp row = VU.zipWith (+) (VU.tail applyPivot) (VU.tail row)
+  where
+    applyPivot = VU.map (f *) rowp
     f = negate $ VU.head row / VU.head rowp    -- Works only if pivot is in the first column
 
 backInsert :: (V.Vector Equation, Matrix) -> Either T.Text (VU.Vector Double)
-backInsert (eqs , ress) = do
+backInsert (eqs, ress) = do
     let res = V.head ress
         piv = VU.head res
         val = VU.last res
@@ -90,6 +85,6 @@ backInsert (eqs , ress) = do
 stepInsert :: Equation -> VU.Vector Double ->  VU.Vector Double
 stepInsert equat xs =
    let piv = VU.head equat
-       as = (VU.tail . VU.init) equat
-       s = VU.last equat - (VU.sum  $ VU.zipWith (*) as (xs))
+       as = VU.unsafeSlice 1 (VU.length equat - 2) equat
+       s = VU.last equat - VU.sum  (VU.zipWith (*) as xs)
     in VU.cons (s/piv)  xs
