@@ -48,7 +48,7 @@ pivotStep _ mat0 = do
         pivot = V.head rowp
     if  abs pivot < cLIMIT
       then Left cINVALID
-      else Right $ (rowp, fmap (newRow rowp) mat)
+      else Right (rowp, fmap (newRow rowp) mat)
 
 -- Find biggest pivot in first column.
 -- Remove row with pivot from matrix

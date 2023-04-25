@@ -5,7 +5,7 @@ import qualified Data.Vector.Unboxed as VU
 import qualified Data.Vector as V
 
 import qualified Data.Vec.Base as Vec
-import qualified Data.Vec.LinAlg as Vec
+-- import qualified Data.Vec.LinAlg as Vec
 
 -- -------------------------------------------------------------- Example 1
 -- Example from
