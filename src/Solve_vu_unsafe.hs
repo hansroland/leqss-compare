@@ -5,10 +5,11 @@ module Solve_vu_unsafe (solve_vu_unsafe) where
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as VU
+import qualified VectorBuilder.Builder as B
+import qualified VectorBuilder.Vector as C
 import Control.Monad.Trans.State.Strict
     ( StateT(StateT, runStateT) )
 
-import BenchmarkData
 
 type Equation = VU.Vector Double
 type Matrix = V.Vector Equation
@@ -27,7 +28,7 @@ checkMatrix mat = checkMatrixSameLength mat >>= checkRowsCols
 
 checkMatrixSameLength :: Matrix -> Either T.Text Matrix
 checkMatrixSameLength mat = do
-    let length1 = VU.length $ V.head mat
+    let length1 = VU.length $ V.unsafeHead mat
     if all (\r -> VU.length r == length1) mat
         then Right mat
         else Left "Not all equations have the same length"
@@ -35,7 +36,7 @@ checkMatrixSameLength mat = do
 checkRowsCols :: Matrix -> Either T.Text Matrix
 checkRowsCols mat = do
     let numRows = length mat
-        numCols = VU.length $ V.head mat
+        numCols = VU.length $ V.unsafeHead mat
     if numRows + 1 == numCols
         then Right mat
         else Left "Number of rows is not compatible with number of columns"
@@ -55,7 +56,7 @@ calcTriangle mat0 = runStateT (mapM (StateT . pivotStep) ops) mat0
         then Left cNONSOLVABLE
         else Right (pivotrow, V.map newRow newMat)
       where
-        ixprow = snd $ maximum $ V.imap (\ix e -> ((abs . VU.head) e, ix)) mat
+        ixprow = snd $ maximum $ V.imap (\ix e -> ((abs . VU.unsafeHead) e, ix)) mat
         pivotrow = (V.!) mat ixprow
         -- newMat = V.ifilter (\ix _ -> ix /= ixprow) mat
         newMat = V.imapMaybe ixFilter mat   -- This is faster than V.ifilter !!
@@ -68,20 +69,20 @@ calcTriangle mat0 = runStateT (mapM (StateT . pivotStep) ops) mat0
         -- Apply the pivot to a row
         newRow :: Equation -> Equation
         newRow row = VU.zipWith (+)
-                     (applyPivot (VU.head row))
-                     (VU.tail row)
+                     (applyPivot (VU.unsafeHead row))
+                     (VU.unsafeTail row)
 
         applyPivot :: Double -> Equation
-        applyPivot hdRow = VU.map (hdRow / negPivot *) tailprow
+        applyPivot hdRow = VU.map (hdRow / negPivot *) unsafeTailprow
         -- The next 2 values do not change between rows in applyPivot!
-        tailprow = VU.tail pivotrow
-        negPivot = negate $ VU.head pivotrow
+        unsafeTailprow = VU.unsafeTail pivotrow
+        negPivot = negate $ VU.unsafeHead pivotrow
 
 backInsert :: (V.Vector Equation, Matrix) -> Either T.Text (VU.Vector Double)
 backInsert (eqs , ress) = do
-    let res = V.head ress
-        piv = VU.head res
-        val = VU.last res
+    let res = V.unsafeHead ress
+        piv = VU.unsafeHead res
+        val = VU.unsafeLast res
         xn  = val / piv
     if  abs piv < cLIMIT
       then Left cNONSOLVABLE
@@ -89,12 +90,11 @@ backInsert (eqs , ress) = do
   where
     stepInsert :: Equation -> VU.Vector Double ->  VU.Vector Double
     stepInsert equat xs =
-        let piv = VU.head equat
-            as = (VU.tail . VU.init) equat
-            s = VU.last equat - VU.sum (VU.zipWith (*) as xs)
-        in VU.cons (s/piv) xs
-
-main :: IO ()
-main = print $ solve_vu_unsafe ex1data_vu
-
-
+        let piv = VU.unsafeHead equat
+            as = (VU.unsafeTail . VU.init) equat
+            s = VU.unsafeLast equat - VU.sum (VU.zipWith (*) as xs)
+        in cons (s/piv) xs
+    cons :: Double -> VU.Vector Double -> VU.Vector Double
+    cons el vect = C.build builder
+      where
+        builder = B.singleton el <> B.vector vect

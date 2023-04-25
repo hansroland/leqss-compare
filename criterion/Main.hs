@@ -40,11 +40,13 @@ main = do
   defaultMain [
     bgroup "3*3"    [ bench "vector(3) list of lists" $ nf solve_ll ex1data_ll
                     , bench "vector (3) unboxed vectors state" $ nf solve_vu_state ex1data_vu
+                    , bench "vector (3) unboxed vectors unsafe" $ nf solve_vu_unsafe ex1data_vu
                     , bench "vector (3) unboxed vectors unfold" $ nf solve_vu_unfold ex1data_vu
                     , bench "Hackage Vec(3)" $ nf (solve_Vec ex1dataVecMat) ex1dataVecCoeffs
                     ],
     bgroup "10x10"  [ bench "vector(10 list of lists" $ nf solve_ll ex3data_ll
                     , bench "vector (10) of unboxed vectors state" $ nf solve_vu_state ex3data_vu
+                    , bench "vector (10) of unboxed vectors unsafe" $ nf solve_vu_unsafe ex3data_vu
                     , bench "vector (10) of unboxed vectors unfold" $ nf solve_vu_unfold ex3data_vu
                     -- , bench "vector Hackage Vec (10)" $ nf (solve_Vec ex3dataVecMat) ex3dataVecCoeffs
                     ]
