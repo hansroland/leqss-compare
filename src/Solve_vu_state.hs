@@ -5,10 +5,11 @@ module Solve_vu_state (solve_vu_state) where
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as VU
+import qualified VectorBuilder.Builder as B
+import qualified VectorBuilder.Vector as C
 import Control.Monad.Trans.State.Strict
     ( StateT(StateT, runStateT) )
 
-import BenchmarkData
 
 type Equation = VU.Vector Double
 type Matrix = V.Vector Equation
@@ -92,9 +93,8 @@ backInsert (eqs , ress) = do
         let piv = VU.head equat
             as = (VU.tail . VU.init) equat
             s = VU.last equat - VU.sum (VU.zipWith (*) as xs)
-        in VU.cons (s/piv) xs
-
-main :: IO ()
-main = print $ solve_vu_state ex1data_vu
-
-
+        in cons (s/piv) xs
+    cons :: Double -> VU.Vector Double -> VU.Vector Double
+    cons el vect = C.build builder
+      where
+        builder = B.singleton el <> B.vector vect
