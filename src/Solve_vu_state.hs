@@ -63,8 +63,8 @@ calcTriangle mat0 = runStateT (mapM (StateT . pivotStep) ops) mat0
           where
             ixFilter :: Int -> a -> Maybe a
             ixFilter ix v
-                | ix == ixprow  = Nothing
-                | otherwise  = Just v
+                | ix == ixprow = Nothing
+                | otherwise = Just v
 
         -- Apply the pivot to a row
         newRow :: Equation -> Equation

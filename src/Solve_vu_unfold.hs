@@ -31,7 +31,7 @@ checkMatrixSameLength mat = do
     let length1 = VU.length $ V.head mat
     if all (\r -> VU.length r == length1) mat
         then Right mat
-        else Left " Not all equations have the same length"
+        else Left "Not all equations have the same length"
 
 checkRowsCols :: Matrix -> Either T.Text Matrix
 checkRowsCols mat = do
@@ -48,32 +48,36 @@ calcTriangle :: Matrix -> Either T.Text (V.Vector Equation)
 calcTriangle mat0 = V.unfoldrExactNM (V.length mat0) pivotStep mat0
   where
     pivotStep :: Matrix -> Either T.Text (Equation, Matrix)
-    pivotStep mat =
-        if abs negPivot < cLIMIT
-        then Left cNONSOLVABLE
-        else Right (pivotrow, V.map newRow newMat)
-      where
-        ixprow = snd $ maximum $ V.imap (\ix e -> ((abs . VU.head) e, ix)) mat
-        pivotrow = (V.!) mat ixprow
-        -- newMat = V.ifilter (\ix _ -> ix /= ixprow) mat
-        newMat = V.imapMaybe ixFilter mat   -- This is faster than V.ifilter !!
-          where
+    pivotStep mat
+       | V.length mat == 1 =
+          let eq = V.head mat
+          in if abs (VU.head eq) < cLIMIT
+             then Left cNONSOLVABLE
+             else Right (eq, V.empty)
+       | otherwise =
+          if abs negPivot < cLIMIT
+          then Left cNONSOLVABLE
+          else Right (pivotrow, V.map newRow newMat)
+        where
+          ixprow = snd $ maximum $ V.imap (\ix e -> ((abs . VU.head) e, ix)) mat
+          pivotrow = (V.!) mat ixprow
+          -- newMat = V.ifilter (\ix _ -> ix /= ixprow) mat
+          newMat = V.imapMaybe ixFilter mat   -- This is faster than V.ifilter !!
+            where
             ixFilter :: Int -> a -> Maybe a
             ixFilter ix v
                 | ix == ixprow = Nothing
                 | otherwise  = Just v
-
-        -- Apply the pivot to a row
-        newRow :: Equation -> Equation
-        newRow row = VU.zipWith (+)
+          -- Apply the pivot to a row
+          newRow :: Equation -> Equation
+          newRow row = VU.zipWith (+)
                      (applyPivot (VU.head row))
                      (VU.tail row)
-
-        applyPivot :: Double -> Equation
-        applyPivot hdRow = VU.map (hdRow / negPivot *) tailprow
-        -- The next 2 values do not change between rows in applyPivot!
-        tailprow = VU.tail pivotrow
-        negPivot = negate $ VU.head pivotrow
+          applyPivot :: Double -> Equation
+          applyPivot hdRow = VU.map (hdRow / negPivot *) tailprow
+          -- The next 2 values do not change between rows in applyPivot!
+          tailprow = VU.tail pivotrow
+          negPivot = negate $ VU.head pivotrow
 
 backInsert :: V.Vector Equation -> Either T.Text (VU.Vector Double)
 backInsert eqs = Right $ V.foldr stepInsert VU.empty eqs
@@ -88,4 +92,3 @@ backInsert eqs = Right $ V.foldr stepInsert VU.empty eqs
     cons el vect = C.build builder
       where
         builder = B.singleton el <> B.vector vect
-
