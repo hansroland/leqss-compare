@@ -1,11 +1,10 @@
 {-# Language OverloadedStrings #-}
 
-module Solve_ll (solve_ll) where
+module Solve_ll_state (solve_ll_state) where
 
 import qualified Data.Text as T
 import Control.Monad.Trans.State.Strict
 
-import BenchmarkData
 
 type Equation = [Double]
 type Matrix = [Equation]
@@ -16,8 +15,8 @@ cLIMIT = 0.001
 cNONSOLVABLE:: T.Text
 cNONSOLVABLE = "Attempt to solve a non-solvable equation system"
 
-solve_ll :: Matrix -> Either T.Text [Double]
-solve_ll mat = checkMatrix mat >>= calcTriangle >>= backInsert
+solve_ll_state :: Matrix -> Either T.Text [Double]
+solve_ll_state mat = checkMatrix mat >>= calcTriangle >>= backInsert
 
 checkMatrix :: Matrix -> Either T.Text Matrix
 checkMatrix mat = checkMatrixSameLength mat >>= checkRowsCols
@@ -42,7 +41,7 @@ calcTriangle mat0 = runStateT (mapM (StateT . pivotStep)  ops) mat0
   where
     len0 = length mat0
     ops = replicate (pred len0) 0
-    venum = [(0::Int)..len0]
+    venum = [(0::Int)..]
 
     pivotStep :: Int -> Matrix -> Either T.Text (Equation, Matrix)
     pivotStep _ mat =
@@ -82,6 +81,3 @@ stepInsert equat xs =
        as = (tail . init) equat
        s = last equat - sum (zipWith (*) as xs)
     in (s/piv) : xs
-
-main :: IO ()
-main = print $ solve_ll ex1data_ll
