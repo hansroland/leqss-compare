@@ -29,6 +29,8 @@ ex1rosettaRight = pure . last <$> ex1rows
 ex1data_ll :: [[Double]]
 ex1data_ll = ex1rows
 
+ex1data_lu :: [VU.Vector Double]
+ex1data_lu = VU.fromList <$> ex1data_ll
 
 ex1data_vu :: V.Vector (VU.Vector Double)
 ex1data_vu = V.fromList $ VU.fromList <$> ex1data_ll

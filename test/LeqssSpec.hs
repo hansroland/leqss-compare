@@ -8,6 +8,9 @@ import qualified Data.Vector.Unboxed as VU
 import BenchmarkData
 import Utils
 import Solve_ll_state
+import Solve_ll_unfold
+import Solve_lu_state
+import Solve_lu_unfold
 import Solve_vu_state
 import Solve_vu_unfold
 import Solve_vu_unsafe
@@ -18,6 +21,14 @@ spec = do
   describe "Test with 3*3 equations" $ do
     it "List of lists state" $ do
         roundList <$> solve_ll_state ex1data_ll `shouldBe` result3x3
+    it "List of lists unfold" $ do
+        roundList <$> solve_ll_unfold ex1data_ll `shouldBe` result3x3
+
+    it "List of unboxed vectors state" $ do
+        roundVuToList <$>  solve_lu_state ex1data_lu `shouldBe` result3x3
+    it "List of unboxed vectors unfold" $ do
+        roundVuToList <$> solve_lu_unfold ex1data_lu `shouldBe` result3x3
+
     it "Vector of unboxed doubles state" $ do
         roundList . VU.toList <$> solve_vu_state ex1data_vu `shouldBe` result3x3
     it "Vector of unboxed doubles unfold" $ do

@@ -13,7 +13,10 @@ import BenchmarkData
 import Solve_Vec
 import Solve_matrix
 import Solve_ll_state
-import Solve_lu
+import Solve_ll_unfold
+
+import Solve_lu_state
+import Solve_lu_unfold
 
 import Solve_vu_state
 import Solve_vu_unfold
@@ -25,6 +28,7 @@ main :: IO ()
 main = do
   putStrLn $ show ex1data_matrix
   putStrLn $ show ex1data_ll
+  putStrLn $ show ex1data_lu
   putStrLn $ show ex1data_vu
   putStrLn $ show ex1rosettaMatrix
   putStrLn $ show ex1rosettaRight
@@ -39,12 +43,16 @@ main = do
 
   defaultMain [
     bgroup "3*3"    [ bench "vector(3) list of lists state" $ nf solve_ll_state ex1data_ll
-                    , bench "vector (3) unboxed vectors state" $ nf solve_vu_state ex1data_vu
-                    , bench "vector (3) unboxed vectors unsafe" $ nf solve_vu_unsafe ex1data_vu
-                    , bench "vector (3) unboxed vectors unfold" $ nf solve_vu_unfold ex1data_vu
+                    , bench "vector(3) list of lists unfold" $ nf solve_ll_unfold ex1data_ll
+                    , bench "vector (3) list of vectors state" $ nf solve_lu_state ex1data_lu
+                    , bench "vector (3) list of vectors unfold" $ nf solve_lu_unfold ex1data_lu
+                    , bench "vector (3) vector of unboxed vectors state" $ nf solve_vu_state ex1data_vu
+                    , bench "vector (3) vector of unboxed vectors unfold" $ nf solve_vu_unfold ex1data_vu
+                    , bench "vector (3) vector of unboxed vectors unsafe" $ nf solve_vu_unsafe ex1data_vu
                     , bench "Hackage Vec(3)" $ nf (solve_Vec ex1dataVecMat) ex1dataVecCoeffs
                     ],
-    bgroup "10x10"  [ bench "vector(10 list of lists state" $ nf solve_ll_state ex3data_ll
+    bgroup "10x10"  [ bench "vector(3) list of lists state" $ nf solve_ll_state ex1data_ll
+                    , bench "vector(3) list of lists unfold" $ nf solve_ll_unfold ex1data_ll
                     , bench "vector (10) of unboxed vectors state" $ nf solve_vu_state ex3data_vu
                     , bench "vector (10) of unboxed vectors unsafe" $ nf solve_vu_unsafe ex3data_vu
                     , bench "vector (10) of unboxed vectors unfold" $ nf solve_vu_unfold ex3data_vu

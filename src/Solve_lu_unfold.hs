@@ -1,6 +1,6 @@
 {-# Language OverloadedStrings #-}
 
-module Solve_lu (solve_lu) where
+module Solve_lu_unfold (solve_lu_unfold) where
 
 import qualified Data.Text as T
 import qualified Data.Vector.Unboxed as V
@@ -16,8 +16,8 @@ cLIMIT = 0.001
 cINVALID :: T.Text
 cINVALID = "Attempt to invert a non-invertible matrix"
 
-solve_lu :: Matrix -> Either T.Text (V.Vector Double)
-solve_lu mat = checkMatrix mat >>= calcTriangle >>= backInsert
+solve_lu_unfold :: Matrix -> Either T.Text (V.Vector Double)
+solve_lu_unfold mat = checkMatrix mat >>= calcTriangle >>= backInsert
 
 checkMatrix :: Matrix -> Either T.Text Matrix
 checkMatrix mat = checkMatrixSameLength mat >>= checkRowsCols
@@ -38,39 +38,39 @@ checkRowsCols mat = do
         else Left "Number of rows is not compatible with number of columns"
 
 calcTriangle :: Matrix -> Either T.Text ([Equation], Matrix)
-calcTriangle mat = runStateT (mapM (StateT . pivotStep) ops) mat
-    where
-        ops = [2..(length mat)]
+calcTriangle mat0 = runStateT (mapM (StateT . pivotStep) ops) mat0
+  where
+    ops = [2..(length mat0)]
 
-pivotStep :: Int -> Matrix -> Either T.Text (Equation, Matrix)
-pivotStep _ mat0 = do
-    let (rowp, mat) = getNextPivotRow mat0
-        pivot = V.head rowp
-    if  abs pivot < cLIMIT
-      then Left cINVALID
-      else Right (rowp, fmap (newRow rowp) mat)
+    pivotStep :: Int -> Matrix -> Either T.Text (Equation, Matrix)
+    pivotStep _ mat = do
+       let (rowp, newmat) = getNextPivotRow mat
+           pivot = V.head rowp
+       if  abs pivot < cLIMIT
+         then Left cINVALID
+         else Right (rowp, fmap (newRow rowp) newmat)
 
--- Find biggest pivot in first column.
--- Remove row with pivot from matrix
--- Return pivot and new matrix
-getNextPivotRow :: Matrix -> (Equation, Matrix)
-getNextPivotRow mat =
-    let ixrow = snd $ maximum $ zip (map (abs . V.head) mat) [0..]
-        (heads, tails) = splitAt ixrow mat
-        rowp = head tails
-    in  (rowp, heads <> tail tails)
+    -- Find biggest pivot in first column.
+    -- Remove row with pivot from matrix
+    -- Return pivot and new matrix
+    getNextPivotRow :: Matrix -> (Equation, Matrix)
+    getNextPivotRow mat =
+        let ixrow = snd $ maximum $ zip (map (abs . V.head) mat) [0..]
+            (heads, tails) = splitAt ixrow mat
+            rowp = head tails
+        in  (rowp, heads <> tail tails)
 
--- Apply the pivot to a row
-newRow :: Equation -> Equation -> Equation
-newRow rowp row = V.tail $
+    -- Apply the pivot to a row
+    newRow :: Equation -> Equation -> Equation
+    newRow rowp row = V.tail $
                    V.zipWith (+)
                      (applyPivot rowp row)
                      row
 
-applyPivot :: Equation -> Equation -> Equation
-applyPivot rowp row = V.map (f *) rowp
-   where
-    f = negate $ V.head row / V.head rowp    -- Works only if pivot is in the first column
+    applyPivot :: Equation -> Equation -> Equation
+    applyPivot rowp row = V.map (f *) rowp
+      where
+        f = negate $ V.head row / V.head rowp    -- Works only if pivot is in the first column
 
 backInsert :: ([Equation], Matrix) -> Either T.Text (V.Vector Double)
 backInsert (eqs , ress) = do

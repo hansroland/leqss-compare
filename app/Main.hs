@@ -13,7 +13,8 @@ import BenchmarkData
 import Solve_Vec
 import Solve_matrix
 import Solve_ll_state
-import Solve_lu
+import Solve_lu_state
+import Solve_lu_unfold
 
 import Solve_vu_state
 import Solve_vu_unfold

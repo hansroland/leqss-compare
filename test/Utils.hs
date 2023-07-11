@@ -13,11 +13,14 @@ roundDouble x = (fromInteger (round (factor * x))) / factor
 
 -- round an unboxed vector
 roundVectorU :: VU.Vector Double -> (VU.Vector Double)
-roundVectorU vec = VU.map roundDouble vec
+roundVectorU = VU.map roundDouble
 
 -- round an  vector
 roundVectorV :: V.Vector Double -> (V.Vector Double)
-roundVectorV vec = V.map roundDouble vec
+roundVectorV = V.map roundDouble
 
 roundList :: [Double] -> [Double]
 roundList lst = roundDouble <$> lst
+
+roundVuToList :: VU.Vector Double -> [Double]
+roundVuToList = roundList . VU.toList

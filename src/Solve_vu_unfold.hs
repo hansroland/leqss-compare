@@ -8,6 +8,9 @@ import qualified Data.Vector.Unboxed as VU
 import qualified VectorBuilder.Builder as B
 import qualified VectorBuilder.Vector as C
 
+import Debug.Trace
+import BenchmarkData
+
 type Equation = VU.Vector Double
 type Matrix = V.Vector Equation
 
@@ -58,6 +61,7 @@ calcTriangle mat0 = V.unfoldrExactNM (V.length mat0) pivotStep mat0
           if abs negPivot < cLIMIT
           then Left cNONSOLVABLE
           else Right (pivotrow, V.map newRow newMat)
+
         where
           ixprow = snd $ maximum $ V.imap (\ix e -> ((abs . VU.head) e, ix)) mat
           pivotrow = (V.!) mat ixprow
@@ -87,8 +91,12 @@ backInsert eqs = Right $ V.foldr stepInsert VU.empty eqs
         let piv = VU.head equat
             as = (VU.tail . VU.init) equat
             s = VU.last equat - VU.sum (VU.zipWith (*) as xs)
-        in cons (s/piv) xs
+        in cons (s/piv) xs                         -- TODO Check division !!!
     cons :: Double -> VU.Vector Double -> VU.Vector Double
     cons el vect = C.build builder
       where
         builder = B.singleton el <> B.vector vect
+
+main :: IO ()
+main = print $ solve_vu_unfold ex1data_vu
+
