@@ -51,18 +51,12 @@ calcTriangle :: Matrix -> Either T.Text (V.Vector Equation)
 calcTriangle mat0 = V.unfoldrExactNM (V.length mat0) pivotStep mat0
   where
     pivotStep :: Matrix -> Either T.Text (Equation, Matrix)
-    pivotStep mat
-       | V.length mat == 1 =
-          let eq = V.head mat
-          in if abs (VU.head eq) < cLIMIT
-             then Left cNONSOLVABLE
-             else Right (eq, V.empty)
-       | otherwise =
-          if abs negPivot < cLIMIT
+    pivotStep mat =
+      if abs negPivot < cLIMIT
           then Left cNONSOLVABLE
           else Right (pivotrow, V.map newRow newMat)
 
-        where
+     where
           ixprow = snd $ maximum $ V.imap (\ix e -> ((abs . VU.head) e, ix)) mat
           pivotrow = (V.!) mat ixprow
           -- newMat = V.ifilter (\ix _ -> ix /= ixprow) mat
