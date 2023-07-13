@@ -21,7 +21,7 @@ import Solve_lu_unfold
 import Solve_vu_state
 import Solve_vu_unfold
 
-import Solve_vu_unsafe
+import Solve_vu_state_unsafe
 import Solve_rosetta1
 
 main :: IO ()
@@ -48,14 +48,14 @@ main = do
                     , bench "vector (3) list of vectors unfold" $ nf solve_lu_unfold ex1data_lu
                     , bench "vector (3) vector of unboxed vectors state" $ nf solve_vu_state ex1data_vu
                     , bench "vector (3) vector of unboxed vectors unfold" $ nf solve_vu_unfold ex1data_vu
-                    , bench "vector (3) vector of unboxed vectors unsafe" $ nf solve_vu_unsafe ex1data_vu
+                    , bench "vector (3) vector of unboxed vectors state_unsafe" $ nf solve_vu_state_unsafe ex1data_vu
                     , bench "Hackage Vec(3)" $ nf (solve_Vec ex1dataVecMat) ex1dataVecCoeffs
                     ],
     bgroup "10x10"  [ bench "vector(3) list of lists state" $ nf solve_ll_state ex1data_ll
                     , bench "vector(3) list of lists unfold" $ nf solve_ll_unfold ex1data_ll
                     , bench "vector (10) of unboxed vectors state" $ nf solve_vu_state ex3data_vu
-                    , bench "vector (10) of unboxed vectors unsafe" $ nf solve_vu_unsafe ex3data_vu
                     , bench "vector (10) of unboxed vectors unfold" $ nf solve_vu_unfold ex3data_vu
+                    , bench "vector (10) of unboxed vectors state unsafe" $ nf solve_vu_state_unsafe ex3data_vu
                     -- , bench "vector Hackage Vec (10)" $ nf (solve_Vec ex3dataVecMat) ex3dataVecCoeffs
                     ]
                     ]

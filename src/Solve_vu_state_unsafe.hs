@@ -1,6 +1,6 @@
 {-# Language OverloadedStrings #-}
 
-module Solve_vu_unsafe (solve_vu_unsafe) where
+module Solve_vu_state_unsafe (solve_vu_state_unsafe) where
 
 import qualified Data.Text as T
 import qualified Data.Vector as V
@@ -20,8 +20,8 @@ cLIMIT = 0.001
 cNONSOLVABLE:: T.Text
 cNONSOLVABLE = "Attempt to solve a non-solvable equation system"
 
-solve_vu_unsafe :: Matrix -> Either T.Text (VU.Vector Double)
-solve_vu_unsafe mat = checkMatrix mat >>= calcTriangle >>= backInsert
+solve_vu_state_unsafe :: Matrix -> Either T.Text (VU.Vector Double)
+solve_vu_state_unsafe mat = checkMatrix mat >>= calcTriangle >>= backInsert
 
 checkMatrix :: Matrix -> Either T.Text Matrix
 checkMatrix mat = checkMatrixSameLength mat >>= checkRowsCols
