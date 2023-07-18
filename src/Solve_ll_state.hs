@@ -37,21 +37,39 @@ checkRowsCols mat = do
         else Left "Number of rows is not compatible with number of columns"
 
 calcTriangle :: Matrix -> Either T.Text ([Equation], Matrix)
-calcTriangle mat0 = runStateT (mapM (StateT . pivotStep)  ops) mat0
+calcTriangle matX = runStateT (mapM (StateT . pivotStep)  ops) matX
   where
-    len0 = length mat0
+    len0 = length matX
     ops = replicate (pred len0) 0
-    venum = [(0::Int)..]
+    -- venum = [(0::Int)..]
 
     pivotStep :: Int -> Matrix -> Either T.Text (Equation, Matrix)
-    pivotStep _ mat =
+    pivotStep _ mat0 =
         if abs negPivot < cLIMIT
         then Left cNONSOLVABLE
-        else Right (pivotrow, map newRow newMat)
+        else Right (pivotRow, map newRow newMat)
       where
-        ixprow = snd $ maximum $ zip (map (abs . head) mat) venum
-        pivotrow = mat !! ixprow
-        newMat = take ixprow mat <> drop (ixprow + 1) mat
+        -- ixprow = snd $ maximum $ zip (map (abs . head) mat) venum
+        -- pivotrow = mat !! ixprow
+        -- newMat = take ixprow mat <> drop (ixprow + 1) mat
+
+        (pivotRow, newMat) = splitPivot
+
+        splitPivot :: (Equation, Matrix)
+        splitPivot =
+            go (tail mat0) (abs (head firstRow), firstRow, [])
+          where
+            firstRow = head mat0
+            go :: Matrix -> (Double, Equation, Matrix) -> (Equation, Matrix)
+            go [] (_, pRow, nMat) = (pRow, nMat)
+            go mat (pivot, pRow, nMat) =
+                    let evPivotRow = head mat
+                        evPivot = abs (head evPivotRow)
+                        tailMat = tail mat
+                    in  if evPivot > pivot
+                        then go tailMat (evPivot, evPivotRow, pRow : nMat)
+                        else go tailMat (pivot, pRow, evPivotRow : nMat )
+
 
         -- Apply the pivot to a row
         newRow :: Equation -> Equation
@@ -62,8 +80,8 @@ calcTriangle mat0 = runStateT (mapM (StateT . pivotStep)  ops) mat0
         applyPivot :: Double -> Equation
         applyPivot hdRow = map (hdRow / negPivot *) tailprow
         -- The next 2 values do not change between rows in applyPivot!
-        tailprow = tail pivotrow
-        negPivot = negate $ head pivotrow
+        tailprow = tail pivotRow
+        negPivot = negate $ head pivotRow
 
 backInsert :: ( [Equation], Matrix) -> Either T.Text [Double]
 backInsert (eqs , ress) = do
