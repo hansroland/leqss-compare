@@ -40,7 +40,7 @@ library solvers
         Solve_ll_unfold,
         Solve_lu_state,
         Solve_lu_unfold,
-        Solve_vu_unsafe,
+        Solve_vu_state_unsafe,
         Solve_vu_state,
         Solve_vu_unfold,
         Solve_rosetta1
@@ -54,6 +54,7 @@ library solvers
                       matrix,
                       vector,
                       vector-builder,
+                      -- vector-sized,
                       monad-extras,
                       Vec,
                       transformers,
