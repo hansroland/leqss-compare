@@ -86,14 +86,17 @@ backInsert (eqs , ress) = do
         xn  = val / piv
     if  abs piv < cLIMIT
       then Left cNONSOLVABLE
-      else Right $ V.foldr stepInsert (VU.singleton xn) eqs
+      else V.foldM stepInsert (VU.singleton xn) (V.reverse eqs)
+            -- Here we miss Vector.foldrM, therefore we have to reverse the equations !!
   where
-    stepInsert :: Equation -> VU.Vector Double ->  VU.Vector Double
-    stepInsert equat xs =
+    stepInsert :: VU.Vector Double -> Equation -> Either T.Text (VU.Vector Double)
+    stepInsert xs equat =
         let piv = VU.head equat
             as = (VU.tail . VU.init) equat
             s = VU.last equat - VU.sum (VU.zipWith (*) as xs)
-        in cons (s/piv) xs
+        in  if abs piv < cLIMIT
+            then Left cNONSOLVABLE
+            else Right $ cons (s/piv) xs
     cons :: Double -> VU.Vector Double -> VU.Vector Double
     cons el vect = C.build builder
       where

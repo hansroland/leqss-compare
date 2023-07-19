@@ -19,7 +19,7 @@ import Solve_lu_unfold
 import Solve_vu_state
 import Solve_vu_unfold
 
-import Solve_vu_unsafe
+import Solve_vu_state_unsafe
 import Solve_rosetta1
 
 main :: IO ()

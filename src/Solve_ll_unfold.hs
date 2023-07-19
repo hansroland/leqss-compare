@@ -3,8 +3,8 @@
 module Solve_ll_unfold (solve_ll_unfold) where
 
 import qualified Data.Text as T
--- import Control.Monad.Trans.State.Strict
 import Control.Monad.Extra
+import Data.Foldable
 
 import Debug.Trace
 import BenchmarkData
@@ -87,15 +87,16 @@ calcTriangle = unfoldM pivotStep
 
 
 backInsert :: [Equation] -> Either T.Text [Double]
-backInsert eqs = Right $ foldr stepInsert [] eqs
+backInsert eqs = foldrM stepInsert [] eqs
   where
-    stepInsert :: Equation -> [Double] -> [Double]
+    stepInsert :: Equation -> [Double] -> Either T.Text [Double]
     stepInsert equat xs =
         let piv = head equat
             as = (tail . init) equat
             s = last equat - sum (zipWith (*) as xs)
-        in (s/piv)  : xs                                  -- TODO Check Division !!!
-
+        in  if abs piv < cLIMIT
+            then Left cNONSOLVABLE
+            else Right $ (s/piv) : xs
 
 main :: IO ()
 main = print $ solve_ll_unfold ex1data_ll

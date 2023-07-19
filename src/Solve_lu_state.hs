@@ -6,6 +6,7 @@ import qualified Data.Text as T
 import qualified Data.Vector.Unboxed as V
 
 import Control.Monad.Trans.State.Strict
+import Data.Foldable ( foldrM )
 
 type Equation = V.Vector Double
 type Matrix = [Equation]
@@ -13,8 +14,8 @@ type Matrix = [Equation]
 cLIMIT :: Double
 cLIMIT = 0.001
 
-cINVALID :: T.Text
-cINVALID = "Attempt to invert a non-invertible matrix"
+cNONSOLVABLE :: T.Text
+cNONSOLVABLE = "Attempt to solve a non-solvable equation system"
 
 solve_lu_state :: Matrix -> Either T.Text (V.Vector Double)
 solve_lu_state mat = checkMatrix mat >>= calcTriangle >>= backInsert
@@ -47,7 +48,7 @@ calcTriangle mat0 = runStateT (mapM (StateT . pivotStep) ops) mat0
         let (rowp, newmat) = getNextPivotRow mat
             pivot = V.head rowp
         if  abs pivot < cLIMIT
-        then Left cINVALID
+        then Left cNONSOLVABLE
         else Right (rowp, fmap (newRow rowp) newmat)
 
     -- Find biggest pivot in first column.
@@ -79,12 +80,14 @@ backInsert (eqs , ress) = do
         val = V.last res
         xn  = val / piv
     if  abs piv < cLIMIT
-      then Left cINVALID
-      else Right $ V.fromList $ foldr stepInsert [xn] eqs
+       then Left cNONSOLVABLE
+       else V.fromList <$> foldrM stepInsert [xn] eqs
 
-stepInsert :: Equation -> [Double] ->  [Double]
+stepInsert :: Equation -> [Double] ->  Either T.Text [Double]
 stepInsert equat xs =
    let piv = V.head equat
        as = (V.tail . V.init) equat
        s = V.last equat - V.sum (V.zipWith (*) as (V.fromList xs))
-    in (s/piv) : xs
+   in  if abs piv < cLIMIT
+          then Left cNONSOLVABLE
+          else Right $ (s/piv) : xs

@@ -4,6 +4,7 @@ module Solve_ll_state (solve_ll_state) where
 
 import qualified Data.Text as T
 import Control.Monad.Trans.State.Strict
+import Data.Foldable
 
 
 type Equation = [Double]
@@ -91,11 +92,14 @@ backInsert (eqs , ress) = do
         xn  = val / piv
     if  abs piv < cLIMIT
       then Left cNONSOLVABLE
-      else Right $ foldr stepInsert [xn] eqs
+      else foldrM stepInsert [xn] eqs
 
-stepInsert :: Equation -> [Double] -> [Double]
+stepInsert :: Equation -> [Double] -> Either T.Text [Double]
 stepInsert equat xs =
    let piv = head equat
        as = (tail . init) equat
        s = last equat - sum (zipWith (*) as xs)
-    in (s/piv) : xs
+    -- in (s/piv) : xs
+    in  if abs piv < cLIMIT
+          then Left cNONSOLVABLE
+          else Right $ (s/piv) : xs

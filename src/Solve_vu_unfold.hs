@@ -78,14 +78,17 @@ calcTriangle mat0 = V.unfoldrExactNM (V.length mat0) pivotStep mat0
           negPivot = negate $ VU.head pivotrow
 
 backInsert :: V.Vector Equation -> Either T.Text (VU.Vector Double)
-backInsert eqs = Right $ V.foldr stepInsert VU.empty eqs
+backInsert eqs = V.foldM stepInsert VU.empty (V.reverse eqs)
+  -- Here we miss Vector.foldrM, therefore we have to reverse the equations !!
   where
-    stepInsert :: Equation -> VU.Vector Double -> VU.Vector Double
-    stepInsert equat xs =
+    stepInsert :: VU.Vector Double -> Equation -> Either T.Text (VU.Vector Double)
+    stepInsert xs equat =
         let piv = VU.head equat
             as = (VU.tail . VU.init) equat
             s = VU.last equat - VU.sum (VU.zipWith (*) as xs)
-        in cons (s/piv) xs                         -- TODO Check division !!!
+        in  if abs piv < cLIMIT
+            then Left cNONSOLVABLE
+            else Right $ cons (s/piv) xs
     cons :: Double -> VU.Vector Double -> VU.Vector Double
     cons el vect = C.build builder
       where
