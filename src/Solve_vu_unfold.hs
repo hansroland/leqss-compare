@@ -57,7 +57,8 @@ calcTriangle mat0 = V.unfoldrExactNM (V.length mat0) pivotStep mat0
           else Right (pivotrow, V.map newRow newMat)
 
      where
-          ixprow = snd $ maximum $ V.imap (\ix e -> ((abs . VU.head) e, ix)) mat
+          ixprow = V.maxIndexBy (\x y -> compare (abshead x) (abshead y)) mat
+          abshead = abs . VU.head
           pivotrow = (V.!) mat ixprow
           -- newMat = V.ifilter (\ix _ -> ix /= ixprow) mat
           newMat = V.imapMaybe ixFilter mat   -- This is faster than V.ifilter !!

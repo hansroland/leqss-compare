@@ -56,7 +56,8 @@ calcTriangle mat0 = runStateT (mapM (StateT . pivotStep) ops) mat0
         then Left cNONSOLVABLE
         else Right (pivotrow, V.map newRow newMat)
       where
-        ixprow = snd $ maximum $ V.imap (\ix e -> ((abs . VU.unsafeHead) e, ix)) mat
+        ixprow = V.maxIndexBy (\x y -> compare (abshead x) (abshead y)) mat
+        abshead = abs . VU.unsafeHead
         pivotrow = (V.!) mat ixprow
         -- newMat = V.ifilter (\ix _ -> ix /= ixprow) mat
         newMat = V.imapMaybe ixFilter mat   -- This is faster than V.ifilter !!
