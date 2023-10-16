@@ -60,7 +60,6 @@ calcTriangle mat0 = V.unfoldrExactNM (V.length mat0) pivotStep mat0
           ixprow = V.maxIndexBy (\x y -> compare (abshead x) (abshead y)) mat
           abshead = abs . VU.head
           pivotrow = (V.!) mat ixprow
-          -- newMat = V.ifilter (\ix _ -> ix /= ixprow) mat
           newMat = V.imapMaybe ixFilter mat   -- This is faster than V.ifilter !!
             where
             ixFilter :: Int -> a -> Maybe a
@@ -79,7 +78,7 @@ calcTriangle mat0 = V.unfoldrExactNM (V.length mat0) pivotStep mat0
           negPivot = negate $ VU.head pivotrow
 
 backInsert :: V.Vector Equation -> Either T.Text (VU.Vector Double)
-backInsert eqs = V.foldM stepInsert VU.empty (V.reverse eqs)
+backInsert eqs = V.foldM' stepInsert VU.empty (V.reverse eqs)
   -- Here we miss Vector.foldrM, therefore we have to reverse the equations !!
   where
     stepInsert :: VU.Vector Double -> Equation -> Either T.Text (VU.Vector Double)

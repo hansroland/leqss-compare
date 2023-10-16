@@ -88,7 +88,7 @@ backInsert (eqs , ress) = do
         xn  = val / piv
     if  abs piv < cLIMIT
       then Left cNONSOLVABLE
-      else V.foldM stepInsert (VU.singleton xn) (V.reverse eqs)
+      else V.foldM' stepInsert (VU.singleton xn) (V.reverse eqs)
             -- Here we miss Vector.foldrM, therefore we have to reverse the equations !!
   where
     stepInsert :: VU.Vector Double -> Equation -> Either T.Text (VU.Vector Double)
